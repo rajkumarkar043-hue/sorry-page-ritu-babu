@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>दिल से माफ़ी — एक खास संदेश</title>
+  <style>
+    :root{--bg:#0f172a;--card:#0b1220;--accent:#ff6b6b;--text:#f8fafc}
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,'Noto Sans','Helvetica Neue',Arial}
+    body{background:linear-gradient(180deg,#061223 0%, #071426 60%);display:flex;align-items:center;justify-content:center;padding:32px;color:var(--text)}
+    .card{width:100%;max-width:820px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:18px;padding:36px 32px;box-shadow:0 10px 30px rgba(2,6,23,0.6);position:relative;overflow:hidden}
+    h1{margin:0 0 12px;font-size:28px;letter-spacing:0.2px}
+    p.lead{margin:0 0 20px;line-height:1.6;font-size:18px;opacity:0.95}
+
+    .message{background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:22px;border-radius:12px;font-size:17px;line-height:1.7}
+
+    .hearts{position:absolute;right:16px;top:12px;display:flex;gap:8px}
+    .heart{width:20px;height:20px;background:var(--accent);transform:rotate(-45deg);border-radius:4px 4px 0 0;opacity:0.9}
+    .heart::before,.heart::after{content:'';position:absolute;width:20px;height:20px;background:var(--accent);border-radius:50%}
+    .heart::before{top:-10px;left:0}
+    .heart::after{left:10px;top:0}
+
+    .btns{display:flex;gap:12px;margin-top:20px}
+    button{background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--text);padding:10px 14px;border-radius:10px;cursor:pointer}
+
+    /* animations */
+    .float-up{animation:floatUp 2.8s ease-in-out infinite}
+    @keyframes floatUp{0%{transform:translateY(0) scale(1)}50%{transform:translateY(-10px) scale(1.05)}100%{transform:translateY(0) scale(1)}}
+
+    .message {opacity:0; transform:translateY(8px); animation:appear 700ms ease-out 200ms forwards}
+    h1{opacity:0; transform:translateY(-6px); animation:appear 600ms ease-out forwards}
+    @keyframes appear{to{opacity:1;transform:none}}
+
+    /* confetti canvas fills behind content */
+    #confetti{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+
+    footer{margin-top:18px;font-size:13px;color:rgba(255,255,255,0.6)}
+
+    .copy-success{display:inline-block;margin-left:8px;color:#7fffd4;font-weight:600}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <canvas id="confetti"></canvas>
+    <div class="hearts">
+      <div class="heart float-up" style="animation-delay:0s"></div>
+      <div class="heart float-up" style="animation-delay:0.25s"></div>
+      <div class="heart float-up" style="animation-delay:0.5s"></div>
+    </div>
+
+    <h1>I am really sorry, Ritubhagat</h1>
+    <p class="lead">यह संदेश दिल से — एक सच्ची माफ़ी और बहुत सारा प्यार देने के लिए।</p>
+
+    <div class="message" id="messageBox">
+      <p>भैया, उस दिन मेरी पार्टनर की बार-बार की मैसेजिंग के कारण आपको जो परेशानी हुई, उसके लिए मैं दिल से माफी मांगता/मांगती हूँ। मुझे पता है कि आप पहले ही अपने दोस्त की दुर्घटना से परेशान थे — और मेरे व्यवहार ने उस कठिन समय को और भी मुश्किल बना दिया।</p>
+
+      <p>हमने गलती की है और मैं इसका पूरा जिम्मा लेता/लेती हूँ। हमारी नीयत कभी भी आपको परेशान करने की नहीं थी। मैं सच में चाहती/चाहता हूँ कि आप यह जानें कि हम आपकी कितनी कदर करते हैं — और हमें आपसे जो डील है, उसे मैं बहाल करना चाहता/चाहती हूँ।</p>
+
+      <p>बहुत सारा प्यार, स्नेह और आदर — यह सब आपके लिए। कृपया हमारी सच्ची माफी स्वीकार कीजिए, और अगर आप चाहें तो हम सीधे बात करके सब ठीक कर सकते हैं।</p>
+
+      <p style="margin-top:10px;font-weight:700">आपका — Raj<br>बहुत सारा प्यार ❤️</p>
+    </div>
+
+    <div class="btns">
+      <button id="copyBtn">Message Copy करें</button>
+      <button id="downloadBtn">HTML डाउनलोड करें</button>
+      <div id="copied" class="copy-success" style="display:none">कॉपी हो गया!</div>
+    </div>
+
+    <footer>यह पेज केवल एक सच्ची माफ़ी और सम्मान के साथ बनाया गया है — अगर आप चाहें तो इसमें और बदलाव किए जा सकते हैं।</footer>
+  </div>
+
+  <script>
+    // Simple confetti effect
+    const canvas = document.getElementById('confetti');
+    const ctx = canvas.getContext('2d');
+    let W, H, particles = [];
+    function resize(){W=canvas.width=canvas.clientWidth;H=canvas.height=canvas.clientHeight}
+    window.addEventListener('resize', resize);resize();
+
+    function rand(min,max){return Math.random()*(max-min)+min}
+    function initConfetti(){particles=[];for(let i=0;i<80;i++){particles.push({x:rand(0,W),y:rand(-H,0),r:rand(6,12),d:rand(1,3),tilt:rand(-10,10),color:['#ff6b6b','#ffd166','#8ecae6','#bde0fe'][i%4]})}}
+    function draw(){ctx.clearRect(0,0,W,H);for(let p of particles){ctx.beginPath();ctx.fillStyle=p.color;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.tilt*0.02);ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r);ctx.restore();}update();}
+    function update(){for(let p of particles){p.y += p.d; p.x += Math.sin(p.y*0.01)*2; p.tilt += 0.5; if(p.y>H+20){p.y = rand(-40,0); p.x = rand(0,W)}}}
+    initConfetti();setInterval(draw, 35);
+
+    // Copy message
+    const copyBtn = document.getElementById('copyBtn');
+    const messageBox = document.getElementById('messageBox');
+    const copied = document.getElementById('copied');
+    copyBtn.addEventListener('click', ()=>{
+      const text = messageBox.innerText.trim();
+      navigator.clipboard.writeText(text).then(()=>{copied.style.display='inline-block';setTimeout(()=>copied.style.display='none',1400)})
+    });
+
+    // Download HTML
+    document.getElementById('downloadBtn').addEventListener('click', ()=>{
+      const blob = new Blob([document.documentElement.outerHTML], {type:'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download='apology_page.html'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>
